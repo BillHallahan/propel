@@ -1353,6 +1353,113 @@ val builtInBenchmarks = Map(
     Set(Symbol("f"), Symbol("g"), Symbol("x")),
     Symbol("fmap")),
 
+    
+  "list_app_id" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type funlist {FNil (FCons (fun nat nat) funlist)})
+    (type list {Nil (Cons nat list)})
+
+      (def apwalk (fun funlist funlist nat list list)
+        (lambda (fswalk funlist) (fs funlist) (x nat) (xs list)
+          (cases fswalk
+            [FNil (cases xs
+                    [Nil Nil]
+                    [(Cons y ys) (apwalk fs fs y ys)])]
+            [(FCons f fws) (Cons (f x) (apwalk fws fs x xs))])))
+
+        (def ap (fun funlist list list)
+          (lambda (fs funlist) (x list)
+            (cases x
+              [Nil Nil]
+              [(Cons x xs) (apwalk fs fs x xs)])))
+  """).get.withCustomProperty(
+    parser.deserialize("(ap (FCons (lambda (y nat) y) FNil) x)").get,
+    parser.deserialize("x").get,
+    Set(Symbol("x")),
+    Symbol("ap")),
+
+  "list_app_composition" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type funlist {FNil (FCons (fun nat nat) funlist)})
+    (type list {Nil (Cons nat list)})
+
+      (def comp (fun (fun nat nat) (fun nat nat) (fun nat nat))
+        (lambda (f (fun nat nat)) (g (fun nat nat))
+          (lambda (x nat) (f (g x)))
+        ))      
+
+      (def apwalk (fun funlist funlist nat list list)
+        (lambda (fswalk funlist) (fs funlist) (x nat) (xs list)
+          (cases fswalk
+            [FNil (cases xs
+                    [Nil Nil]
+                    [(Cons y ys) (apwalk fs fs y ys)])]
+            [(FCons f fws) (Cons (f x) (apwalk fws fs x xs))])))
+
+        (def ap (fun funlist list list)
+          (lambda (fs funlist) (x list)
+            (cases x
+              [Nil Nil]
+              [(Cons x xs) (apwalk fs fs x xs)])))
+  """).get.withCustomProperty(
+    parser.deserialize("(ap (ap (ap (FCons comp FNil) u) v) w)").get,
+    parser.deserialize("(ap u (ap v w))").get,
+    Set(Symbol("u"),Symbol("v"),Symbol("w")),
+    Symbol("ap")),
+
+  "list_app_homomorphism" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type funlist {FNil (FCons (fun nat nat) funlist)})
+    (type list {Nil (Cons nat list)})
+
+      (def apwalk (fun funlist funlist nat list list)
+        (lambda (fswalk funlist) (fs funlist) (x nat) (xs list)
+          (cases fswalk
+            [FNil (cases xs
+                    [Nil Nil]
+                    [(Cons y ys) (apwalk fs fs y ys)])]
+            [(FCons f fws) (Cons (f x) (apwalk fws fs x xs))])))
+
+        (def ap (fun funlist list list)
+          (lambda (fs funlist) (x list)
+            (cases x
+              [Nil Nil]
+              [(Cons x xs) (apwalk fs fs x xs)])))
+  """).get.withCustomProperty(
+    parser.deserialize("(ap (FCons f FNil) (FCons x FNil))").get,
+    parser.deserialize("(FCons (f x) FNil)").get,
+    Set(Symbol("f"),Symbol("x")),
+    Symbol("ap")),
+
+  "list_app_interchange" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type funlist {FNil (FCons (fun nat nat) funlist)})
+    (type list {Nil (Cons nat list)})
+
+      (def apwalk (fun funlist funlist nat list list)
+        (lambda (fswalk funlist) (fs funlist) (x nat) (xs list)
+          (cases fswalk
+            [FNil (cases xs
+                    [Nil Nil]
+                    [(Cons y ys) (apwalk fs fs y ys)])]
+            [(FCons f fws) (Cons (f x) (apwalk fws fs x xs))])))
+
+        (def ap (fun funlist list list)
+          (lambda (fs funlist) (x list)
+            (cases x
+              [Nil Nil]
+              [(Cons x xs) (apwalk fs fs x xs)])))
+  """).get.withCustomProperty(
+    parser.deserialize("(ap u (FCons y FNil))").get,
+    parser.deserialize("(ap (FCons (lambda (f (fun nat nat)) f y) FNil) u)").get,
+    Set(Symbol("u"),Symbol("y")),
+    Symbol("ap")),
+
+
   "list_semigroup_assoc" ->
   parser.deserialize("""
     (type nat {Z (S nat)})
@@ -1436,6 +1543,82 @@ val builtInBenchmarks = Map(
     parser.deserialize("(>>= m (lambda (x nat) (>>= (f x) g)))").get,
     Set(Symbol("m"), Symbol("f"), Symbol("g")),
     Symbol(">>=")),
+
+  "nonempty_functor_id" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type list {Nil (Cons nat list)})
+    (type nonempty {(NCons nat list)})
+
+    (def fmap (fun (fun nat nat) list list)
+      (lambda (f (fun nat nat)) (x list)
+        (cases x
+          [Nil Nil]
+          [(Cons x xs) (Cons (f x) (fmap f xs))])))
+    
+    (def nonempty_fmap (fun (fun nat nat) nonempty nonempty)
+      (lambda (f (fun nat nat)) (x nonempty)
+        (cases x
+          [(NCons x xs) (NCons (f x) (fmap f xs))])))
+  """).get.withCustomProperty(
+    parser.deserialize("(nonempty_fmap (lambda (y nat) y) x)").get,
+    parser.deserialize("x").get,
+    Set(Symbol("x")),
+    Symbol("nonempty_fmap")),
+
+  "nonempty_functor_composition" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type list {Nil (Cons nat list)})
+    (type nonempty {(NCons nat list)})
+
+    (def fmap (fun (fun nat nat) list list)
+      (lambda (f (fun nat nat)) (x list)
+        (cases x
+          [Nil Nil]
+          [(Cons x xs) (Cons (f x) (fmap f xs))])))
+    
+    (def nonempty_fmap (fun (fun nat nat) nonempty nonempty)
+      (lambda (f (fun nat nat)) (x nonempty)
+        (cases x
+          [(NCons x xs) (NCons (f x) (fmap f xs))])))
+
+  (prop-for nonempty_fmap (forall (x nonempty) (f (fun nat nat)) (g (fun nat nat))
+    (== (nonempty_fmap (lambda (y nat) (f (g y))) x) (nonempty_fmap f (nonempty_fmap g x)))))
+
+  """).get,
+
+  "tree_functor_id" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type tree {Leaf (Node tree nat tree)})
+
+    (def fmap (fun (fun nat nat) tree tree)
+      (lambda (f (fun nat nat)) (x tree)
+        (cases x
+          [Leaf Leaf]
+          [(Node left x right) (Node (fmap f left) (f x) (fmap f right))])))
+  """).get.withCustomProperty(
+    parser.deserialize("(fmap (lambda (y nat) y) x)").get,
+    parser.deserialize("x").get,
+    Set(Symbol("x")),
+    Symbol("fmap")),
+
+  "tree_functor_composition" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type tree {Leaf (Node tree nat tree)})
+
+    (def fmap (fun (fun nat nat) tree tree)
+      (lambda (f (fun nat nat)) (x tree)
+        (cases x
+          [Leaf Leaf]
+          [(Node left x right) (Node (fmap f left) (f x) (fmap f right))])))
+  """).get.withCustomProperty(
+    parser.deserialize("(fmap (lambda (y nat) (f (g y))) x)").get,
+    parser.deserialize("(fmap f (fmap g x))").get,
+    Set(Symbol("f"), Symbol("g"), Symbol("x")),
+    Symbol("fmap")),
 
   "function_functor_id" ->
   parser.deserialize("""
