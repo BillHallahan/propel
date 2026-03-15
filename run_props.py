@@ -20,7 +20,7 @@ def monad(t):
 
 list_props = semigroup("list") + functor("list") + app("list") + monad("list")
 maybe_props = semigroup("maybe") + functor("maybe") + app("maybe") + monad("maybe")
-nonempty_props = functor("nonempty") + functor("applicative") + monad("nonempty")
+nonempty_props = functor("nonempty") + functor("nonempty") + monad("nonempty")
 tree_props = functor("tree")
 function_props = semigroup("function") + functor("function") + monad("function")
 pair_props = semigroup("pair") + functor("pair") + monad("pair")
