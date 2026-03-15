@@ -19,8 +19,8 @@ def monad(t):
              (t + "_monad_assoc", "monadAssociativity" + t.capitalize())]
 
 list_props = semigroup("list") + functor("list") + app("list") + monad("list")
-maybe_props = semigroup("maybe") + functor("maybe") + monad("maybe")
-nonempty_props = functor("list")
+maybe_props = semigroup("maybe") + functor("maybe") + app("maybe") + monad("maybe")
+nonempty_props = functor("nonempty") + functor("applicative") + monad("nonempty")
 tree_props = functor("tree")
 function_props = semigroup("function") + functor("function") + monad("function")
 pair_props = semigroup("pair") + functor("pair") + monad("pair")
