@@ -1359,6 +1359,87 @@ val builtInBenchmarks = Map(
           [(Pair (Just x) (Just y)) (Just (nat_add x y))])))
   """).get,
 
+  "maybe_monoid_rightid" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type maybe {Nothing (Just nat)})
+
+    (def nat_add (fun nat nat nat)
+      (lambda (x nat) (y nat) (cases x
+        [Z y]
+        [(S x) (S (nat_add x y))])))
+
+    (def <> (fun maybe maybe maybe)
+      (lambda [assoc] (x maybe) (y maybe)
+        (cases (Pair x y)
+          [(Pair Nothing y) y]
+          [(Pair x Nothing) x]
+          [(Pair (Just x) (Just y)) (Just (nat_add x y))])))
+    
+    (prop-for <> (forall (x maybe)
+      (== (<> x Nothing) x)))
+  """).get,
+
+  "maybe_monoid_leftid" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type maybe {Nothing (Just nat)})
+
+    (def nat_add (fun nat nat nat)
+      (lambda (x nat) (y nat) (cases x
+        [Z y]
+        [(S x) (S (nat_add x y))])))
+
+    (def <> (fun maybe maybe maybe)
+      (lambda [assoc] (x maybe) (y maybe)
+        (cases (Pair x y)
+          [(Pair Nothing y) y]
+          [(Pair x Nothing) x]
+          [(Pair (Just x) (Just y)) (Just (nat_add x y))])))
+    
+    (prop-for <> (forall (x maybe)
+      (== (<> Nothing x) x)))
+  """).get,
+
+  "maybe_monoid_concatentation" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type maybe {Nothing (Just nat)})
+    (type list {Nil (Cons maybe list)})
+    (type listmaybe {LNil (LCons maybe listmaybe)})
+
+    (def nat_add (fun nat nat nat)
+      (lambda (x nat) (y nat) (cases x
+        [Z y]
+        [(S x) (S (nat_add x y))])))
+
+    (def <> (fun maybe maybe maybe)
+      (lambda [assoc] (x maybe) (y maybe)
+        (cases (Pair x y)
+          [(Pair Nothing y) y]
+          [(Pair x Nothing) x]
+          [(Pair (Just x) (Just y)) (Just (nat_add x y))])))
+  
+      (def foldr (fun (fun maybe maybe maybe) maybe listmaybe maybe)
+      (lambda (k (fun maybe maybe maybe)) (z maybe) (xs listmaybe)
+        (cases xs
+          [LNil z]
+          [(LCons y ys) (k y (foldr k z ys))]))
+    )
+
+    (def mconcat (fun listmaybe maybe)
+      (lambda (xs listmaybe)
+        (cases xs
+          [LNil Nothing]
+          [(LCons xs xss) (cases xs
+                                [Nothing (Just Z)]
+                                [(Just y) (<> (Just y) (mconcat xss))])])))
+
+    (prop-for <> (forall (xs listmaybe)
+    (== (mconcat xs) (foldr <> Nothing xs))))
+    """).get,
+
+
   "maybe_monad_leftid" ->
   parser.deserialize("""
     (type nat {Z (S nat)})
@@ -1564,6 +1645,74 @@ val builtInBenchmarks = Map(
           [(Cons x xs) (Cons x (<> xs y))])))
   """).get,
 
+  "list_monoid_rightid" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type list {Nil (Cons nat list)})
+
+    (def <> (fun list list list)
+      (lambda (x list) (y list)
+        (cases x
+          [Nil y]
+          [(Cons x xs) (Cons x (<> xs y))])))
+
+     (def mempty list
+       Nil)
+
+    (prop-for <> (forall (x list)
+      (== (<> x Nil) x)))
+  """).get,
+
+  "list_monoid_leftid" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type list {Nil (Cons nat list)})
+
+    (def <> (fun list list list)
+      (lambda (x list) (y list)
+        (cases x
+          [Nil y]
+          [(Cons x xs) (Cons x (<> xs y))])))
+
+     (def mempty list
+       Nil)
+
+    (prop-for <> (forall (x list)
+      (== (<> Nil x) x)))
+  """).get,
+
+  "list_monoid_concatenation" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type list {Nil (Cons nat list)})
+    (type listlist {LNil (LCons list listlist)})
+
+    (def <> (fun list list list)
+      (lambda (x list) (y list)
+        (cases x
+          [Nil y]
+          [(Cons x xs) (Cons x (<> xs y))])))
+
+    (def foldr (fun (fun list list list) list listlist list)
+      (lambda (k (fun list list list)) (z list) (xs listlist)
+        (cases xs
+          [LNil z]
+          [(LCons y ys) (k y (foldr k z ys))]))
+    )
+
+    (def mconcat (fun listlist list)
+      (lambda (xs listlist)
+        (cases xs
+          [LNil Nil]
+          [(LCons xs xss) (cases xs
+                                [Nil (mconcat xss)]
+                                [(Cons y ys) (Cons y (mconcat (LCons ys xss)))])])))
+
+  (prop-for <> (forall (xs listlist)
+    (== (mconcat xs) (foldr <> Nil xs))))
+  """).get,
+
+
   "list_monad_leftid" ->
   parser.deserialize("""
     (type nat {Z (S nat)})
@@ -1635,6 +1784,30 @@ val builtInBenchmarks = Map(
     parser.deserialize("(>>= m (lambda (x nat) (>>= (f x) g)))").get,
     Set(Symbol("m"), Symbol("f"), Symbol("g")),
     Symbol(">>=")),
+
+  "nonempty_semigroup_assoc" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type list {Nil (Cons nat list)})
+    (type nonempty {(NCons nat list)})
+
+    (def tolist (fun nonempty list)
+      (lambda (x nonempty)
+        (cases x
+          [(NCons x xs) (Cons x xs)])))
+
+    (def <>list (fun list list list)
+      (lambda (x list) (y list)
+        (cases x
+          [Nil y]
+          [(Cons x xs) (Cons x (<>list xs y))])))
+
+    (def <> (fun nonempty nonempty nonempty)
+      (lambda[assoc] (x nonempty) (y nonempty)
+        (cases x
+          [(NCons x xs) (NCons x (<>list xs (tolist y)))])))
+  """).get,
+
 
   "nonempty_functor_id" ->
   parser.deserialize("""
