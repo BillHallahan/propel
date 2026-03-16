@@ -1401,7 +1401,7 @@ val builtInBenchmarks = Map(
       (== (<> Nothing x) x)))
   """).get,
 
-  "maybe_monoid_concatentation" ->
+  "maybe_monoid_concatenation" ->
   parser.deserialize("""
     (type nat {Z (S nat)})
     (type maybe {Nothing (Just nat)})
@@ -2281,6 +2281,27 @@ val builtInBenchmarks = Map(
     Set(Symbol("f"), Symbol("g"), Symbol("x")),
     Symbol("fmap")),
 
+  "function_app_id" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type funnatnat (fun nat nat))
+
+    (def pure (fun (fun nat nat) nat (fun nat nat))
+      (lambda (x (fun nat nat)) (y nat)
+        x
+      )
+    )
+
+    (def <*> (fun (fun nat nat nat) (fun nat nat) nat nat)
+      (lambda (f (fun nat nat nat)) (g (fun nat nat)) (x nat)
+        (f x (g x))
+      )
+    )
+
+    (prop-for <*> (forall (z nat) (x (fun nat nat))
+      (== ((<*> (pure (lambda (y nat) y)) x) z) (x z))))
+  """).get,
+
   "function_semigroup_assoc" ->
   parser.deserialize("""
     (type nat {Z (S nat)})
@@ -2386,6 +2407,74 @@ val builtInBenchmarks = Map(
       (lambda [assoc] (x pair) (y pair)
         (let (Pair (Pair xa xb) (Pair ya yb)) (Pair x y) (Pair (nat_add xa ya) (nat_add xb yb)))))
   """).get,
+
+  "pair_monoid_rightid" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type pair {(Pair nat nat)})
+
+    (def nat_add (fun nat nat nat)
+      (lambda (x nat) (y nat) (cases x
+        [Z y]
+        [(S x) (S (nat_add x y))])))
+
+    (def <> (fun pair pair pair)
+      (lambda (x pair) (y pair)
+        (let (Pair (Pair xa xb) (Pair ya yb)) (Pair x y) (Pair (nat_add xa ya) (nat_add xb yb)))))
+
+    (prop-for <> (forall (x pair)
+      (== (<> x (Pair Z Z)) x)))
+  """).get,
+
+  "pair_monoid_leftid" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type pair {(Pair nat nat)})
+
+    (def nat_add (fun nat nat nat)
+      (lambda (x nat) (y nat) (cases x
+        [Z y]
+        [(S x) (S (nat_add x y))])))
+
+    (def <> (fun pair pair pair)
+      (lambda (x pair) (y pair)
+        (let (Pair (Pair xa xb) (Pair ya yb)) (Pair x y) (Pair (nat_add xa ya) (nat_add xb yb)))))
+
+    (prop-for <> (forall (x pair)
+      (== (<> (Pair Z Z) x) x)))
+  """).get,
+
+  "pair_monoid_concatenation" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type pair {(Pair nat nat)})
+    (type listpair {LNil (LCons pair listpair)})
+
+    (def nat_add (fun nat nat nat)
+      (lambda (x nat) (y nat) (cases x
+        [Z y]
+        [(S x) (S (nat_add x y))])))
+
+    (def <> (fun pair pair pair)
+      (lambda (x pair) (y pair)
+        (let (Pair (Pair xa xb) (Pair ya yb)) (Pair x y) (Pair (nat_add xa ya) (nat_add xb yb)))))
+
+      (def foldr (fun (fun pair pair pair) pair listpair pair)
+      (lambda (k (fun pair pair pair)) (z pair) (xs listpair)
+        (cases xs
+          [LNil z]
+          [(LCons y ys) (k y (foldr k z ys))]))
+      )
+
+    (def mconcat (fun listpair pair)
+      (lambda (xs listpair)
+        (foldr <> (Pair Z Z) xs)))
+
+    (prop-for <> (forall (xs listpair)
+    (== (mconcat xs) (foldr <> (Pair Z Z) xs))))
+  """).get,
+
+
 
   "pair_monad_leftid" ->
   parser.deserialize("""

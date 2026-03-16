@@ -27,7 +27,7 @@ maybe_props = semigroup("maybe") + monoid("maybe") + functor("maybe") + app("may
 nonempty_props = semigroup("nonempty") + functor("nonempty") + functor("nonempty") + monad("nonempty")
 tree_props = functor("tree")
 function_props = semigroup("function") + functor("function") + monad("function")
-pair_props = semigroup("pair") + functor("pair") + monad("pair")
+pair_props = semigroup("pair") + monoid("pair") + + functor("pair") + monad("pair")
 state_props = functor("state") + monad("state")
 props = list_props + maybe_props + nonempty_props + tree_props + function_props + pair_props + state_props
 
