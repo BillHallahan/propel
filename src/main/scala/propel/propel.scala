@@ -2365,6 +2365,172 @@ val builtInBenchmarks = Map(
 
   """).get,
 
+  "function_app_composition" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type funnatnat (fun nat nat))
+
+    (def comp (fun (fun nat nat) (fun nat nat) (fun nat nat))
+      (lambda (f (fun nat nat)) (g (fun nat nat))
+        (lambda (x nat) (f (g x)))
+      ))      
+
+    (def pure (fun (fun (fun nat nat) (fun nat nat) nat nat)
+                      nat
+                      (fun nat nat)
+                      (fun nat nat)
+                      nat
+                      nat
+)
+      (lambda (x (fun (fun nat nat) (fun nat nat) nat nat)) (y nat)
+        x
+      )
+    )
+
+    (def <**> (fun
+                (fun nat (fun (fun nat nat) (fun nat nat) nat nat))
+                (fun nat nat nat)
+                nat
+                (fun nat nat)
+                nat
+                nat)
+      (lambda (f (fun nat (fun (fun nat nat) (fun nat nat) nat nat))) (g (fun nat nat nat)) (x nat)
+        (f x (g x))
+      )
+    )
+
+    (def <***> (fun
+                (fun nat (fun nat nat) nat nat)
+                (fun nat nat nat)
+                nat
+                nat
+                nat)
+      (lambda (f (fun nat (fun nat nat) nat nat)) (g (fun nat nat nat)) (x nat)
+        (f x (g x))
+      )
+    )
+
+    (def <****> (fun
+                (fun nat nat nat)
+                (fun nat nat)
+                nat
+                nat)
+      (lambda (f (fun nat nat nat)) (g (fun nat nat)) (x nat)
+        (f x (g x))
+      )
+    )
+
+    (prop-for <****> (forall (z nat) (u (fun nat nat nat)) (v (fun nat nat nat)) (w (fun nat nat))
+      (== 
+        (<****> (<***> (<**> (pure comp) u) v) w)
+        (<****> u (<****> v w))
+      )))
+
+  """).get,
+
+  "function_app_homomorphism" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type funnatnat (fun nat nat))
+
+    (def comp (fun (fun nat nat) (fun nat nat) (fun nat nat))
+      (lambda (f (fun nat nat)) (g (fun nat nat))
+        (lambda (x nat) (f (g x)))
+      ))      
+
+    (def pure (fun (fun nat nat)
+                      nat
+                      nat
+                      nat
+            )
+      (lambda (x (fun nat nat)) (y nat)
+        x
+      )
+    )
+
+    (def pure2 (fun nat
+                    nat
+                    nat
+            )
+      (lambda (x nat) (y nat)
+        x
+      )
+    )
+
+
+    (def <****> (fun
+                (fun nat nat nat)
+                (fun nat nat)
+                nat
+                nat)
+      (lambda (f (fun nat nat nat)) (g (fun nat nat)) (x nat)
+        (f x (g x))
+      )
+    )
+
+    (prop-for <****> (forall (e nat) (f (fun nat nat)) (x nat)
+      (== 
+        ((<****> (pure f) (pure2 x)) e)
+        ((pure2 (f x)) e)
+      )))
+  """).get,
+
+  "function_app_interchange" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type funnatnat (fun nat nat))
+
+    (def comp (fun (fun nat nat) (fun nat nat) (fun nat nat))
+      (lambda (f (fun nat nat)) (g (fun nat nat))
+        (lambda (x nat) (f (g x)))
+      ))      
+
+    (def pure (fun (fun (fun nat nat) nat)
+                      nat
+                      (fun nat nat)
+                      nat
+            )
+      (lambda (x (fun (fun nat nat) nat)) (y nat)
+        x
+      )
+    )
+
+    (def pure2 (fun nat
+                    nat
+                    nat
+            )
+      (lambda (x nat) (y nat)
+        x
+      )
+    )
+
+
+    (def <****> (fun
+                (fun nat nat nat)
+                (fun nat nat)
+                nat
+                nat)
+      (lambda (f (fun nat nat nat)) (g (fun nat nat)) (x nat)
+        (f x (g x))
+      )
+    )
+
+    (def <|*> (fun
+                (fun nat (fun nat nat) nat)
+                (fun nat nat nat)
+                nat
+                nat)
+      (lambda (f (fun nat (fun nat nat) nat)) (g (fun nat nat nat)) (x nat)
+        (f x (g x))
+      )
+    )
+
+    (prop-for <****> (forall (e nat) (u (fun nat nat nat)) (y nat)
+      (== 
+        ((<****> u (pure2 y)) e)
+        ((<|*> (pure (lambda (f (fun nat nat)) (f y))) u) e)
+      )))
+      """).get,
 
   "function_semigroup_assoc" ->
   parser.deserialize("""
