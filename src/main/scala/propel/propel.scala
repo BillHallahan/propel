@@ -1912,11 +1912,10 @@ val builtInBenchmarks = Map(
         (>>=nonemptyfun m1 (lambda (x1 (fun nat nat)) (>>= m2 (lambda (x2 nat) (NCons (x1 x2) Nil)))))
       ))
     )
-  """).get.withCustomProperty(
-    parser.deserialize("(ap (FNCons (lambda (y nat) y) FNil) x)").get,
-    parser.deserialize("x").get,
-    Set(Symbol("x")),
-    Symbol("ap")),
+
+  (prop-for ap (forall (x nonempty)
+        (== (ap (FNCons (lambda (y nat) y) FNil) x) x)))
+  """).get,
 
   "nonempty_app_composition" ->
   parser.deserialize("""
@@ -2058,66 +2057,93 @@ val builtInBenchmarks = Map(
   parser.deserialize("""
     (type nat {Z (S nat)})
     (type list {Nil (Cons nat list)})
-    (type funlist {FNil (FCons (fun nat nat) funlist)})
-    (type nonempty {(NCons nat list)})
-    (type nonemptyfun {(FNCons (fun nat nat) funlist)})
+    (type funlist1 {Nil (Cons (fun nat nat) funlist1)})
+    (type funlist2 {Nil (Cons (fun (fun nat nat) nat) funlist2)})
+
+    (type nonempty {(Cons nat list)})
+    (type funnonempty1 {(Cons (fun nat nat) funlist1)})
+    (type funnonempty2 {(Cons (fun (fun nat nat) nat) funlist2)})
 
     (def <> (fun list list list)
-      (lambda [assoc] (x list) (y list)
+      (lambda (x list) (y list)
         (cases x
           [Nil y]
           [(Cons x xs) (Cons x (<> xs y))])))
 
-    (def <>funlist (fun funlist funlist funlist)
-      (lambda [assoc] (x funlist) (y funlist)
+    (def <>1 (fun funlist1 funlist1 funlist1)
+      (lambda (x funlist1) (y funlist1)
         (cases x
-          [FNil y]
-          [(FCons x xs) (FCons x (<>funlist xs y))])))
+          [Nil y]
+          [(Cons x xs) (Cons x (<>1 xs y))])))
+
+    (def <>2 (fun funlist2 funlist2 funlist2)
+      (lambda (x funlist2) (y funlist2)
+        (cases x
+          [Nil y]
+          [(Cons x xs) (Cons x (<>2 xs y))])))
+
+    (def >>= (fun list (fun nat list) list)
+      (lambda (x list) (f (fun nat list))
+        (cases x
+          [Nil Nil]
+          [(Cons x xs) (<> (f x) (>>= xs f))])))
+
+    (def >>=1 (fun funlist1 (fun (fun nat nat) list) list)
+      (lambda (x funlist1) (f (fun (fun nat nat) list))
+        (cases x
+          [Nil Nil]
+          [(Cons x xs) (<> (f x) (>>=1 xs f))])))
+
+    (def >>=2 (fun funlist2 (fun (fun (fun nat nat) nat) list) list)
+      (lambda (x funlist2) (f (fun (fun (fun nat nat) nat) list))
+        (cases x
+          [Nil Nil]
+          [(Cons x xs) (<> (f x) (>>=2 xs f))])))
 
     (def tolist (fun nonempty list)
       (lambda (x nonempty)
         (cases x
-          [(NCons x xs) (Cons x xs)])))
-    
-    (def tolistfun (fun nonemptyfun funlist)
-      (lambda (x nonemptyfun)
-        (cases x
-          [(FNCons x xs) (FCons x xs)])))
+          [(Cons x xs) (Cons x xs)])))
 
-    (def >>=funlist (fun funlist (fun (fun nat nat) list) list)
-      (lambda (x funlist) (f (fun (fun nat nat) list))
-        (cases x
-          [FNil Nil]
-          [(FCons x xs) (<> (f x) (>>=funlist xs f))])))    
-
-    (def >>=list (fun list (fun nat list) list)
-      (lambda (x list) (f (fun nat list))
-        (cases x
-          [Nil Nil]
-          [(Cons x xs) (<> (f x) (>>=list xs f))])))
-
-    (def >>= (fun nonempty (fun nat nonempty) nonempty)
+    (def >>=non (fun nonempty (fun nat nonempty) nonempty)
       (lambda (x nonempty) (f (fun nat nonempty))
         (cases x
-          [(NCons a as) (cases (f a)
-                          [(NCons b bs) (NCons b (<> bs (>>=list as (lambda (x nat) (tolist (f x))))))])])))
+          [(Cons a as) (cases (f a)
+                          [(Cons b bs) (Cons b (<> bs (>>= as (lambda (x nat) (tolist (f x))))))])])))
 
-    (def >>=nonemptyfun (fun nonemptyfun (fun (fun nat nat) nonempty) nonempty)
-          (lambda (x nonemptyfun) (f (fun (fun nat nat) nonempty))
-            (cases x
-              [(FNCons a as) (cases (f a)
-                              [(NCons b bs) (NCons b (<> bs (>>=funlist as (lambda (x (fun nat nat)) (tolist (f x))))))])])))
+    (def >>=non1 (fun funnonempty1 (fun (fun nat nat) nonempty) nonempty)
+      (lambda (x funnonempty1) (f (fun (fun nat nat) nonempty))
+        (cases x
+          [(Cons a as) (cases (f a)
+                          [(Cons b bs) (Cons b (<> bs (>>=1 as (lambda (x (fun nat nat)) (tolist (f x))))))])])))
 
-    (def ap (fun nonemptyfun nonempty nonempty)
-      (lambda (m1 nonemptyfun) (m2 nonempty) (
-        (>>=nonemptyfun m1 (lambda (x1 (fun nat nat)) (>>= m2 (lambda (x2 nat) (NCons (x1 x2) Nil)))))
+    (def >>=non2 (fun funnonempty2 (fun (fun (fun nat nat) nat) nonempty) nonempty)
+      (lambda (x funnonempty2) (f (fun (fun (fun nat nat) nat) nonempty) )
+        (cases x
+          [(Cons a as) (cases (f a)
+                          [(Cons b bs) (Cons b (<> bs (>>=2 as (lambda (x (fun (fun nat nat) nat)) (tolist (f x))))))])])))
+
+    (def <*>1 (fun funnonempty1 nonempty nonempty)
+      (lambda (m1 funnonempty1) (m2 nonempty) (
+        (>>=non1 m1 (lambda (x1 (fun nat nat)) (>>=non m2 (lambda (x2 nat) (Cons (x1 x2) Nil)))))
       ))
     )
-  """).get.withCustomProperty(
-    parser.deserialize("(ap u (FNCons y FNil))").get,
-    parser.deserialize("(ap (FNCons (lambda (f (fun nat nat)) f y) FNil) u)").get,
-    Set(Symbol("x")),
-    Symbol("ap")),
+
+    (def <*>2 (fun funnonempty2 funnonempty1 nonempty)
+      (lambda (m1 funnonempty2) (m2 funnonempty1) (
+        (>>=non2 m1 (lambda (x1 (fun (fun nat nat) nat)) (>>=non1 m2 (lambda (x2 (fun nat nat)) (Cons (x1 x2) Nil)))))
+      ))
+    )
+
+
+  (prop-for <*>1 (forall (u funnonempty1) (y nat)
+        (== 
+            (<*>1 u (Cons y Nil))
+            (<*>2 (Cons (lambda (f (fun nat nat)) (f y)) Nil) u)
+        )
+        )
+    )
+  """).get,
 
   "nonempty_monad_leftid" ->
   parser.deserialize("""

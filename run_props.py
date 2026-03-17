@@ -13,20 +13,20 @@ def functor(t):
     return [ (t + "_functor_id", "fmapId" + t.capitalize()), 
              (t + "_functor_composition", "fmapComposition" + t.capitalize()) ]
 def app(t):
-    return [ (t + "_app_id", "appIdentity" + t.capitalize()), 
-             (t + "_app_composition", "appComposition" + t.capitalize()),
-             (t + "_app_homomorphism", "appHomomorphism" + t.capitalize()),
-             (t + "_app_interchange", "appHomomorphism" + t.capitalize())]
+    return [ (t + "_app_id", "appIdentity" + t.capitalize())]
+    #          (t + "_app_composition", "appComposition" + t.capitalize()),
+    #          (t + "_app_homomorphism", "appHomomorphism" + t.capitalize()),
+            #  (t + "_app_interchange", "appHomomorphism" + t.capitalize())]
 def monad(t):
     return [ (t + "_monad_leftid", "monadLeftIdentity" + t.capitalize()), 
              (t + "_monad_rightid", "monadRightIdentity" + t.capitalize()),
              (t + "_monad_assoc", "monadAssociativity" + t.capitalize())]
 
-list_props = semigroup("list") + monoid("list") + functor("list") + app("list") + monad("list")
-maybe_props = semigroup("maybe") + monoid("maybe") + functor("maybe") + app("maybe") + monad("maybe")
-nonempty_props = semigroup("nonempty") + functor("nonempty") + functor("nonempty") + monad("nonempty")
+list_props = semigroup("list") + monoid("list") + functor("list") + monad("list")
+maybe_props = semigroup("maybe") + monoid("maybe") + functor("maybe") + monad("maybe")
+nonempty_props = semigroup("nonempty") + functor("nonempty") + app("nonempty") + monad("nonempty")
 tree_props = functor("tree")
-function_props = semigroup("function") + functor("function") + app("function") + monad("function")
+function_props = semigroup("function") + functor("function") + monad("function")
 pair_props = semigroup("pair") + monoid("pair") + functor("pair") + monad("pair")
 state_props = functor("state") + monad("state")
 props = list_props + maybe_props + nonempty_props + tree_props + function_props + pair_props + state_props
