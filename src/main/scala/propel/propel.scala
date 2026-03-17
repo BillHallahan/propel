@@ -2302,6 +2302,70 @@ val builtInBenchmarks = Map(
       (== ((<*> (pure (lambda (y nat) y)) x) z) (x z))))
   """).get,
 
+  "function_app_composition" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type funnatnat (fun nat nat))
+
+    (def comp (fun (fun nat nat) (fun nat nat) (fun nat nat))
+      (lambda (f (fun nat nat)) (g (fun nat nat))
+        (lambda (x nat) (f (g x)))
+      ))      
+
+    (def pure (fun (fun (fun nat nat) (fun nat nat) nat nat)
+                      nat
+                      (fun nat nat)
+                      (fun nat nat)
+                      nat
+                      nat
+)
+      (lambda (x (fun (fun nat nat) (fun nat nat) nat nat)) (y nat)
+        x
+      )
+    )
+
+    (def <**> (fun
+                (fun nat (fun (fun nat nat) (fun nat nat) nat nat))
+                (fun nat nat nat)
+                nat
+                (fun nat nat)
+                nat
+                nat)
+      (lambda (f (fun nat (fun (fun nat nat) (fun nat nat) nat nat))) (g (fun nat nat nat)) (x nat)
+        (f x (g x))
+      )
+    )
+
+    (def <***> (fun
+                (fun nat (fun nat nat) nat nat)
+                (fun nat nat nat)
+                nat
+                nat
+                nat)
+      (lambda (f (fun nat (fun nat nat) nat nat)) (g (fun nat nat nat)) (x nat)
+        (f x (g x))
+      )
+    )
+
+    (def <****> (fun
+                (fun nat nat nat)
+                (fun nat nat)
+                nat
+                nat)
+      (lambda (f (fun nat nat nat)) (g (fun nat nat)) (x nat)
+        (f x (g x))
+      )
+    )
+
+    (prop-for <****> (forall (z nat) (u (fun nat nat nat)) (v (fun nat nat nat)) (w (fun nat nat))
+      (== 
+        (<****> (<***> (<**> (pure comp) u) v) w)
+        (<****> u (<****> v w))
+      )))
+
+  """).get,
+
+
   "function_semigroup_assoc" ->
   parser.deserialize("""
     (type nat {Z (S nat)})
