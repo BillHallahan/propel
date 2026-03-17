@@ -2704,7 +2704,24 @@ val builtInBenchmarks = Map(
     (== (mconcat xs) (foldr <> (Pair Z Z) xs))))
   """).get,
 
+  "pair_app_id" ->
+  parser.deserialize("""
+    (type nat {Z (S nat)})
+    (type pair {(Pair nat nat)})
 
+    (def return (lambda (x nat) (Pair Z x)))
+
+    (def nat_add (fun nat nat nat)
+      (lambda (x nat) (y nat) (cases x
+        [Z y]
+        [(S x) (S (nat_add x y))])))
+
+    (def >>= (fun pair (fun nat pair) pair)
+      (lambda (x pair) (f (fun nat pair))
+        (let (Pair a b) x
+          (let (Pair u v) (f b)
+            (Pair (nat_add a u) v)))))
+  """).get,
 
   "pair_monad_leftid" ->
   parser.deserialize("""
